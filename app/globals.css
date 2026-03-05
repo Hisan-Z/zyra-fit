@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+@theme {
+  /* True Dark Surfaces */
+  --color-void: #0A0A0A;
+  --color-base: #111111;
+  --color-surface: #1A1A1A;
+  --color-elevated: #222222;
+  --color-overlay: #2A2A2A;
+
+  /* Neon Accents */
+  --color-lime: #C8FF00;
+  --color-lime-dim: #8AAF00;
+  --color-nred: #FF3B3B;
+  --color-nred-dim: #B02828;
+  --color-ncyan: #00FFCC;
+  --color-namber: #FFB800;
+
+  /* Text */
+  --color-text-primary: #F0F0F0;
+  --color-text-secondary: #888888;
+  --color-text-muted: #555555;
+  --color-text-inverse: #0A0A0A;
+
+  /* Fonts */
+  --font-display: "Barlow Condensed", sans-serif;
+  --font-body: "DM Sans", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  /* Animations */
+  @keyframes neon-pulse {
+    0%, 100% { box-shadow: 0 0 10px rgba(200,255,0,0.3); }
+    50% { box-shadow: 0 0 25px rgba(200,255,0,0.6); }
+  }
+  @keyframes scan-line {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100vh); }
+  }
+  
+  --animate-neon-pulse: neon-pulse 2s ease-in-out infinite;
+  --animate-scan-line: scan-line 4s linear infinite;
+
+  /* Borders & Shadows */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+}
+
+:root {
+  --background: var(--color-void);
+  --foreground: var(--color-text-primary);
+  
+  /* Glows */
+  --glow-lime: 0 0 20px rgba(200,255,0,0.25), 0 0 60px rgba(200,255,0,0.08);
+  --glow-red: 0 0 20px rgba(255,59,59,0.25), 0 0 60px rgba(255,59,59,0.08);
+  --glow-cyan: 0 0 20px rgba(0,255,204,0.20);
+}
+
+.card-glow-lime { 
+  box-shadow: 0 0 0 1px rgba(200,255,0,0.15), 0 4px 24px rgba(0,0,0,0.4); 
+}
+.card-glow-red { 
+  box-shadow: 0 0 0 1px rgba(255,59,59,0.15), 0 4px 24px rgba(0,0,0,0.4); 
+}
+.btn-glow-active { 
+  box-shadow: 0 0 16px rgba(200,255,0,0.4); 
+}
+
+.bg-grid-pattern {
+  background-image: 
+    linear-gradient(rgba(200,255,0,0.03) 1px, transparent 1px), 
+    linear-gradient(90deg, rgba(200,255,0,0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.bg-radial-glow-lime {
+  background-image: radial-gradient(ellipse at top, rgba(200,255,0,0.08) 0%, transparent 60%);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body);
+  @apply antialiased min-h-screen selection:bg-lime selection:text-void;
+}

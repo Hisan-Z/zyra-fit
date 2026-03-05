@@ -1,0 +1,17 @@
+{
+    "name": "Zyra Fit",
+    "short_name": "Zyra",
+    "description": "Premium Fitness & Nutrition Tracker",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0A0A0A",
+    "theme_color": "#C8FF00",
+    "icons": [
+        {
+            "src": "/icon.svg",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}
