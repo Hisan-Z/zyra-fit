@@ -20,7 +20,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 password: { label: "Password", type: "password" }
             },
             async authorize(credentials) {
+                console.log(`[AUTH_DEBUG] Login attempt for: ${credentials?.email}`)
                 if (!credentials?.email || !credentials?.password) {
+                    console.error("[AUTH_DEBUG] Missing credentials")
                     return null
                 }
 
@@ -28,12 +30,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     where: { email: credentials.email as string }
                 })
 
-                if (!user || !user.passwordHash) {
+                if (!user) {
+                    console.error("[AUTH_DEBUG] No user found with this email")
+                    return null
+                }
+
+                if (!user.passwordHash) {
+                    console.error("[AUTH_DEBUG] User found but has no password (OAuth account?)")
                     return null
                 }
 
                 const isValid = await bcrypt.compare(credentials.password as string, user.passwordHash)
-                if (!isValid) return null
+                console.log(`[AUTH_DEBUG] Password valid: ${isValid}`)
+
+                if (!isValid) {
+                    console.error("[AUTH_DEBUG] Password mismatch")
+                    return null
+                }
 
                 return {
                     id: user.id,

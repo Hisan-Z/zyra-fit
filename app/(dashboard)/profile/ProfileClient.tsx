@@ -134,6 +134,18 @@ export function ProfileClient({ user }: ProfileProps) {
                                 />
                             </div>
                         </div>
+
+                        <div className="mt-6 pt-6 border-t border-border-default flex justify-end">
+                            <button
+                                type="button"
+                                onClick={handleSubmit}
+                                disabled={isLoading}
+                                className="flex items-center gap-2 px-4 py-2 bg-lime/10 text-lime rounded-lg text-[10px] font-mono uppercase tracking-[0.2em] hover:bg-lime/20 transition-all card-glow-lime disabled:opacity-50"
+                            >
+                                {isLoading ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                                Save Details
+                            </button>
+                        </div>
                     </GlassCard>
                 </motion.div>
 
