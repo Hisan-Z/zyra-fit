@@ -1,36 +1,106 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏋️ Zyra fit — Premium Fitness & Nutrition Tracker
 
-## Getting Started
+**Zyra fit** is a high-performance, mobile-first, full-stack fitness and nutrition tracker designed with a "True Dark Operator" aesthetic. It combines precise data tracking with a premium user experience, feeling like a high-end SaaS application while remaining completely free to self-host.
 
-First, run the development server:
+![Zyra Fit Dashboard Mockup](https://raw.githubusercontent.com/Hisan-Z/zyra-fit/master/public/icon.svg)
 
+---
+
+## ⚡ Vision & Aesthetic
+
+- **Design Philosophy**: "True Dark Operator" — near-black surfaces, electric neon-lime (#C8FF00) and neon-red (#FF3B3B) accents.
+- **Visuals**: Fluid micro-animations, glassmorphism, and sharp geometric typography (Barlow Condensed & DM Sans).
+- **Core Goal**: Provide an edge in your fitness journey through precise tracking of net calories, macro splits, and technical workout data.
+
+---
+
+## 🚀 Key Features
+
+### 🍽️ Nutrition Intelligence
+- **Net Calories Hero**: Real-time tracking of `Food Eaten - Calories Burned`.
+- **Itemized Recipe Logging**: Log complex recipes as individual ingredients for granular control.
+- **Custom Foods Manager**: Build your own private database of custom ingredients and nutrition facts.
+- **Edamam Integration**: Global food search powered by the Edamam API.
+
+### 🏋️ Advanced Fitness Tracking
+- **Workout Logger**: Technical resistance training tracker with volume calculations and intensity levels.
+- **ACSM Cardio Calculator**: Science-based treadmill calorie estimation (VO2, METs) based on speed, incline, and body weight.
+- **Progress Tracking**: Historical charts for weight trends and calorie averages.
+
+### 📱 Mobile-First Experience
+- **PWA Ready**: Install Zyra fit on your home screen for a native app feel.
+- **Responsive Design**: Optimized for everything from small-screen phones to tablet dashboards.
+- **Glassmorphic UI**: Premium cards and modals with backdrop blur and neon glows.
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+- **Framework**: [Next.js 14](https://nextjs.org/) (App Router)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
+- **UI Components**: [shadcn/ui](https://ui.shadcn.com/) (Customized)
+- **Animation**: [Framer Motion](https://www.framer.com/motion/)
+- **State Management**: [Zustand](https://zustand-demo.pmnd.rs/) & [TanStack Query](https://tanstack.com/query/latest)
+- **Charts**: [Recharts](https://recharts.org/)
+
+### Backend
+- **Database**: PostgreSQL (via [Neon.tech](https://neon.tech/))
+- **ORM**: [Prisma](https://www.prisma.io/)
+- **Auth**: [NextAuth.js v5](https://authjs.dev/)
+- **APIs**: Edamam (Nutrition), WGER (Exercises)
+
+---
+
+## ⚙️ Getting Started
+
+### 1. Clone the repository
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/Hisan-Z/zyra-fit.git
+cd zyra-fit
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Install dependencies
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Environment Variables
+Create a `.env` file in the root directory and add your credentials:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+DATABASE_URL="your_postgresql_url"
+DIRECT_URL="your_direct_postgres_url"
+NEXTAUTH_SECRET="your_secret"
+EDAMAM_APP_ID="your_id"
+EDAMAM_APP_KEY="your_key"
+WGER_API_KEY="your_key"
+```
 
-## Learn More
+### 4. Database Setup
+```bash
+npx prisma db push
+npx prisma generate
+```
 
-To learn more about Next.js, take a look at the following resources:
+### 5. Run the development server
+```bash
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📱 Installation (PWA)
 
-## Deploy on Vercel
+1. Open the deployed application in your mobile browser.
+2. Select **"Add to Home Screen"** from your browser options.
+3. Launch **Zyra fit** directly from your app drawer.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📄 License
+This project is open-source and free to host for personal use.
+
+---
+
+*Built with passion for the "True Dark" athlete.*
