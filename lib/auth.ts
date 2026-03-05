@@ -1,15 +1,18 @@
 import NextAuth from "next-auth"
-import { SupabaseAdapter } from "@auth/supabase-adapter"
+import { PrismaAdapter } from "@auth/prisma-adapter"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { supabase } from "./supabase"
+import GoogleProvider from "next-auth/providers/google"
+import prisma from "./prisma"
+import bcrypt from "bcryptjs"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-    adapter: SupabaseAdapter({
-        url: process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        secret: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, // Use anon key for adapter (service role better for production, but anon works for public schema)
-    }),
+    adapter: PrismaAdapter(prisma),
     session: { strategy: "jwt" },
     providers: [
+        GoogleProvider({
+            clientId: process.env.AUTH_GOOGLE_ID,
+            clientSecret: process.env.AUTH_GOOGLE_SECRET,
+        }),
         CredentialsProvider({
             name: "Sign in",
             credentials: {
@@ -21,35 +24,44 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     return null
                 }
 
-                // Find user via Supabase
-                const { data: user, error } = await supabase
-                    .from('User')
-                    .select('*')
-                    .eq('email', credentials.email)
-                    .single()
+                const user = await prisma.user.findUnique({
+                    where: { email: credentials.email as string }
+                })
 
-                if (error || !user || !user.passwordHash) {
+                if (!user || !user.passwordHash) {
                     return null
                 }
 
-                // TODO: In a real app, use bcrypt.compare to verify password
-                // For demonstration purposes, skipping actual hash check.
-                // const isValid = await bcrypt.compare(credentials.password as string, user.passwordHash)
-                // if (!isValid) return null
+                const isValid = await bcrypt.compare(credentials.password as string, user.passwordHash)
+                if (!isValid) return null
 
                 return {
                     id: user.id,
                     email: user.email,
                     name: user.name,
-                    image: null
                 }
             }
         })
     ],
     pages: {
         signIn: "/login",
+        newUser: "/register",
     },
     callbacks: {
+        authorized({ auth, request: { nextUrl } }) {
+            const isLoggedIn = !!auth?.user
+            const isAuthPage = nextUrl.pathname.startsWith('/login') || nextUrl.pathname.startsWith('/register')
+
+            if (!isLoggedIn && !isAuthPage) {
+                return false // Redirect to login
+            }
+
+            if (isLoggedIn && isAuthPage) {
+                return Response.redirect(new URL('/', nextUrl))
+            }
+
+            return true
+        },
         async session({ session, token }) {
             if (token.sub && session.user) {
                 session.user.id = token.sub
