@@ -19,8 +19,9 @@ export async function POST(req: Request) {
             return new NextResponse("Email already registered", { status: 400 })
         }
 
-        // TODO: In a real app, hash the password using bcrypt here!
-        const passwordHash = password
+        // Hash the password using bcryptjs
+        const bcrypt = require('bcryptjs');
+        const passwordHash = await bcrypt.hash(password, 10)
 
         const user = await prisma.user.create({
             data: { email, name, passwordHash }
