@@ -28,18 +28,27 @@ interface RecipeBuilderProps {
 }
 
 export function RecipeBuilder({ isOpen, onClose, editRecipeId }: RecipeBuilderProps) {
-    const { asyncCreateRecipe, asyncUpdateRecipe, recipes } = useAppStore()
+    const { asyncCreateRecipe, asyncUpdateRecipe, recipes, fetchRecipes, customFoods, fetchCustomFoods } = useAppStore()
     const [name, setName] = React.useState("")
     const [description, setDescription] = React.useState("")
     const [servings, setServings] = React.useState(1)
     const [ingredients, setIngredients] = React.useState<RecipeIngredient[]>([])
 
     // Search state
+    const [activeTab, setActiveTab] = React.useState<'edamam' | 'custom' | 'recipes'>('edamam')
     const [query, setQuery] = React.useState("")
     const { results, isLoading } = useFoodSearch(query)
     const [isSearching, setIsSearching] = React.useState(false)
     const [isSubmitting, setIsSubmitting] = React.useState(false)
     const [showSuccess, setShowSuccess] = React.useState(false)
+
+    // Load data
+    React.useEffect(() => {
+        if (isOpen) {
+            if (recipes.length === 0) fetchRecipes()
+            if (customFoods.length === 0) fetchCustomFoods()
+        }
+    }, [isOpen, recipes.length, customFoods.length, fetchRecipes, fetchCustomFoods])
 
     // Load edit recipe if provided
     React.useEffect(() => {
@@ -73,18 +82,44 @@ export function RecipeBuilder({ isOpen, onClose, editRecipeId }: RecipeBuilderPr
         fat: Math.round((totals.fat / servings) * 10) / 10
     }
 
-    const addIngredient = (food: any) => {
-        const actualGrams = food.grams && food.grams > 0 ? food.grams : 100
-        const factor = 100 / actualGrams
+    const addIngredient = (food: any, type: 'edamam' | 'custom' | 'recipe' = 'edamam') => {
+        let newIngredient: RecipeIngredient;
 
-        const newIngredient: RecipeIngredient = {
-            foodName: food.label,
-            edamamFoodId: food.foodId,
-            grams: actualGrams,
-            calories: food.calories || 0,
-            proteinG: food.proteinG || 0,
-            carbsG: food.carbsG || 0,
-            fatG: food.fatG || 0
+        if (type === 'custom') {
+            newIngredient = {
+                foodName: food.name,
+                grams: 100,
+                calories: food.caloriesPer100g,
+                proteinG: food.proteinPer100g,
+                carbsG: food.carbsPer100g,
+                fatG: food.fatPer100g
+            }
+        } else if (type === 'recipe') {
+            const scale = food.servings || 1;
+            const rCals = (food.RecipeIngredient?.reduce((s: any, i: any) => s + (i.calories || 0), 0) || 0) / scale
+            const rPro = (food.RecipeIngredient?.reduce((s: any, i: any) => s + (i.proteinG || 0), 0) || 0) / scale
+            const rCarb = (food.RecipeIngredient?.reduce((s: any, i: any) => s + (i.carbsG || 0), 0) || 0) / scale
+            const rFat = (food.RecipeIngredient?.reduce((s: any, i: any) => s + (i.fatG || 0), 0) || 0) / scale
+
+            newIngredient = {
+                foodName: `${food.name} (Recipe)`,
+                grams: 100,
+                calories: rCals,
+                proteinG: rPro,
+                carbsG: rCarb,
+                fatG: rFat
+            }
+        } else {
+            const actualGrams = food.grams && food.grams > 0 ? food.grams : 100
+            newIngredient = {
+                foodName: food.label,
+                edamamFoodId: food.foodId,
+                grams: actualGrams,
+                calories: food.calories || 0,
+                proteinG: food.proteinG || 0,
+                carbsG: food.carbsG || 0,
+                fatG: food.fatG || 0
+            }
         }
 
         setIngredients([...ingredients, newIngredient])
@@ -93,13 +128,9 @@ export function RecipeBuilder({ isOpen, onClose, editRecipeId }: RecipeBuilderPr
     }
 
     const updateIngredientGrams = (index: number, grams: number) => {
-        // Need to scale macros back and forth
-        // For simplicity, we'd need the per 100g stored or recalculate.
-        // Let's just track ingredients with their base macros in a more robust way if needed,
-        // but for this MVP, let's assume we can update if we had the food source.
-        // I'll skip complex scaling for now to keep it concise, or just update the gram/macro ratio.
         setIngredients(prev => prev.map((ing, i) => {
             if (i !== index) return ing
+            if (ing.grams === 0) return { ...ing, grams }
             const ratio = grams / ing.grams
             return {
                 ...ing,
@@ -138,6 +169,9 @@ export function RecipeBuilder({ isOpen, onClose, editRecipeId }: RecipeBuilderPr
     }
 
     if (!isOpen) return null
+
+    const filteredCustom = customFoods.filter(f => f.name.toLowerCase().includes(query.toLowerCase()))
+    const filteredRecipes = recipes.filter(r => r.name.toLowerCase().includes(query.toLowerCase()) && r.id !== editRecipeId)
 
     return (
         <AnimatePresence>
@@ -219,7 +253,7 @@ export function RecipeBuilder({ isOpen, onClose, editRecipeId }: RecipeBuilderPr
                                                 <div key={idx} className="bg-void/30 p-4 rounded-xl border border-border-subtle flex items-center justify-between group">
                                                     <div>
                                                         <p className="font-bold text-sm text-text-primary group-hover:text-lime transition-colors">{ing.foodName}</p>
-                                                        <p className="text-[10px] font-mono text-text-muted uppercase">{ing.calories} kcal | {ing.proteinG.toFixed(1)}p {ing.carbsG.toFixed(1)}c {ing.fatG.toFixed(1)}f</p>
+                                                        <p className="text-[10px] font-mono text-text-muted uppercase">{ing.calories.toFixed(0)} kcal | {ing.proteinG.toFixed(1)}p {ing.carbsG.toFixed(1)}c {ing.fatG.toFixed(1)}f</p>
                                                     </div>
                                                     <div className="flex items-center gap-4">
                                                         <div className="flex items-center gap-2">
@@ -273,7 +307,7 @@ export function RecipeBuilder({ isOpen, onClose, editRecipeId }: RecipeBuilderPr
                                         </div>
 
                                         <div className="p-4 bg-elevated/50 rounded-xl border border-border-default space-y-2">
-                                            <div className="flex items-center gap-2 text-[10px] font-mono text-text-secondary uppercase tracking-wider">
+                                            <div className="flex items-center gap-2 text-[10px] font-mono text-text-secondary uppercase tracking-wider" title="Average per serving">
                                                 <Utensils size={12} className="text-lime" /> Per Serving ({servings})
                                             </div>
                                             <div className="flex justify-between items-baseline">
@@ -307,45 +341,114 @@ export function RecipeBuilder({ isOpen, onClose, editRecipeId }: RecipeBuilderPr
                                             initial={{ opacity: 0, x: 20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             exit={{ opacity: 0, x: 20 }}
-                                            className="absolute inset-0 z-20 bg-base border border-lime/20 rounded-2xl overflow-hidden flex flex-col"
+                                            className="absolute inset-0 z-20 bg-base border border-border-default rounded-2xl overflow-hidden flex flex-col shadow-2xl"
                                         >
-                                            <div className="p-4 border-b border-border-default bg-elevated flex items-center gap-2">
+                                            {/* Tabs Toggle */}
+                                            <div className="flex bg-elevated/50 border-b border-border-default shrink-0">
+                                                <button
+                                                    onClick={() => setActiveTab('edamam')}
+                                                    className={`flex-1 py-3 text-[10px] font-mono uppercase tracking-widest transition-colors ${activeTab === 'edamam' ? 'text-lime bg-lime/10 border-b-2 border-lime' : 'text-text-muted hover:text-text-primary'}`}
+                                                >
+                                                    EDAMAM
+                                                </button>
+                                                <button
+                                                    onClick={() => setActiveTab('custom')}
+                                                    className={`flex-1 py-3 text-[10px] font-mono uppercase tracking-widest transition-colors ${activeTab === 'custom' ? 'text-lime bg-lime/10 border-b-2 border-lime' : 'text-text-muted hover:text-text-primary'}`}
+                                                >
+                                                    CUSTOM
+                                                </button>
+                                                <button
+                                                    onClick={() => setActiveTab('recipes')}
+                                                    className={`flex-1 py-3 text-[10px] font-mono uppercase tracking-widest transition-colors ${activeTab === 'recipes' ? 'text-lime bg-lime/10 border-b-2 border-lime' : 'text-text-muted hover:text-text-primary'}`}
+                                                >
+                                                    RECIPES
+                                                </button>
+                                            </div>
+
+                                            <div className="p-4 border-b border-border-default bg-elevated/30 flex items-center gap-2">
                                                 <Search size={16} className="text-lime" />
                                                 <input
                                                     autoFocus
                                                     type="text" value={query} onChange={e => setQuery(e.target.value)}
-                                                    placeholder="SEARCH COMPONENTS..."
-                                                    className="bg-transparent flex-1 font-mono text-xs focus:outline-none uppercase tracking-widest text-lime"
+                                                    placeholder={activeTab === 'edamam' ? "SEARCH COMPONENTS..." : "FILTER LIST..."}
+                                                    className="bg-transparent flex-1 font-mono text-xs focus:outline-none uppercase tracking-widest text-lime placeholder:text-lime/30"
                                                 />
                                                 <button onClick={() => setIsSearching(false)}>
                                                     <X size={16} className="text-text-muted" />
                                                 </button>
                                             </div>
+
                                             <div className="flex-1 overflow-y-auto">
-                                                {isLoading ? (
-                                                    <div className="p-8 flex justify-center">
-                                                        <Loader2 className="animate-spin text-lime" size={24} />
-                                                    </div>
-                                                ) : results?.length > 0 ? (
-                                                    <div className="divide-y divide-border-subtle">
-                                                        {results.map((food: any) => (
-                                                            <button
-                                                                key={food.foodId}
-                                                                onClick={() => addIngredient(food)}
-                                                                className="w-full p-4 text-left hover:bg-lime/5 transition-colors group flex items-center justify-between"
-                                                            >
-                                                                <div>
-                                                                    <p className="font-bold text-xs uppercase tracking-wide group-hover:text-lime transition-colors">{food.label}</p>
-                                                                    <p className="text-[8px] font-mono text-text-muted">{Math.round(food.calories || 0)} kcal / {Math.round(food.grams || 100)}g</p>
-                                                                </div>
-                                                                <ChevronRight size={14} className="text-text-muted group-hover:text-lime group-hover:translate-x-1 transition-all" />
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                ) : query.length > 2 && (
-                                                    <div className="p-8 text-center text-text-muted text-[10px] font-mono uppercase tracking-[0.2em]">
-                                                        No matches found
-                                                    </div>
+                                                {activeTab === 'edamam' ? (
+                                                    isLoading ? (
+                                                        <div className="p-8 flex justify-center">
+                                                            <Loader2 className="animate-spin text-lime" size={24} />
+                                                        </div>
+                                                    ) : results?.length > 0 ? (
+                                                        <div className="divide-y divide-border-subtle">
+                                                            {results.map((food: any) => (
+                                                                <button
+                                                                    key={food.foodId}
+                                                                    onClick={() => addIngredient(food, 'edamam')}
+                                                                    className="w-full p-4 text-left hover:bg-lime/5 transition-colors group flex items-center justify-between"
+                                                                >
+                                                                    <div>
+                                                                        <p className="font-bold text-xs uppercase tracking-wide group-hover:text-lime transition-colors">{food.label}</p>
+                                                                        <p className="text-[8px] font-mono text-text-muted">{Math.round(food.calories || 0)} kcal / {Math.round(food.grams || 100)}g</p>
+                                                                    </div>
+                                                                    <ChevronRight size={14} className="text-text-muted group-hover:text-lime group-hover:translate-x-1 transition-all" />
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    ) : query.length > 2 && (
+                                                        <div className="p-8 text-center text-text-muted text-[10px] font-mono uppercase tracking-[0.2em]">
+                                                            No matches found
+                                                        </div>
+                                                    )
+                                                ) : activeTab === 'custom' ? (
+                                                    filteredCustom.length > 0 ? (
+                                                        <div className="divide-y divide-border-subtle">
+                                                            {filteredCustom.map(food => (
+                                                                <button
+                                                                    key={food.id}
+                                                                    onClick={() => addIngredient(food, 'custom')}
+                                                                    className="w-full p-4 text-left hover:bg-lime/5 transition-colors group flex items-center justify-between"
+                                                                >
+                                                                    <div>
+                                                                        <p className="font-bold text-xs uppercase tracking-wide group-hover:text-lime transition-colors">{food.name}</p>
+                                                                        <p className="text-[8px] font-mono text-text-muted">{food.caloriesPer100g} kcal / 100g</p>
+                                                                    </div>
+                                                                    <ChevronRight size={14} className="text-text-muted group-hover:text-lime group-hover:translate-x-1 transition-all" />
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="p-8 text-center text-text-muted text-[10px] font-mono uppercase tracking-[0.2em]">
+                                                            {customFoods.length === 0 ? "No custom foods created" : "No matches found"}
+                                                        </div>
+                                                    )
+                                                ) : (
+                                                    filteredRecipes.length > 0 ? (
+                                                        <div className="divide-y divide-border-subtle">
+                                                            {filteredRecipes.map(recipe => (
+                                                                <button
+                                                                    key={recipe.id}
+                                                                    onClick={() => addIngredient(recipe, 'recipe')}
+                                                                    className="w-full p-4 text-left hover:bg-lime/5 transition-colors group flex items-center justify-between"
+                                                                >
+                                                                    <div>
+                                                                        <p className="font-bold text-xs uppercase tracking-wide group-hover:text-lime transition-colors">{recipe.name}</p>
+                                                                        <p className="text-[8px] font-mono text-text-muted">Existing Recipe</p>
+                                                                    </div>
+                                                                    <ChevronRight size={14} className="text-text-muted group-hover:text-lime group-hover:translate-x-1 transition-all" />
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="p-8 text-center text-text-muted text-[10px] font-mono uppercase tracking-[0.2em]">
+                                                            {recipes.length < 2 ? "No other recipes available" : "No matches found"}
+                                                        </div>
+                                                    )
                                                 )}
                                             </div>
                                         </motion.div>
